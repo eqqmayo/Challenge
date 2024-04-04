@@ -6,8 +6,14 @@
 //
 
 import UIKit
+import Alamofire
 
 class ViewController: UIViewController {
+    
+    var profile = Profile(name: "길동이", location: "한양", followers: 123, following: 456)
+    var repositories: [Repository] = []
+    
+    let dataManager = DataManager()
     
     lazy var profileView: UIView = {
         let view = UIView()
@@ -24,9 +30,8 @@ class ViewController: UIViewController {
         return imageView
     }()
     
-    let profileNameLabel: UILabel = {
+    lazy var profileNameLabel: UILabel = {
         let label = UILabel()
-        label.text = "Calia"
         label.font = UIFont.boldSystemFont(ofSize: 25)
         label.textColor = #colorLiteral(red: 0, green: 0, blue: 0, alpha: 1)
         return label
@@ -54,12 +59,12 @@ class ViewController: UIViewController {
         imageView.frame.size.width = 20
         imageView.frame.size.height = 20
         imageView.image = UIImage(systemName: "mappin")
+        imageView.tintColor = #colorLiteral(red: 0.501960814, green: 0.501960814, blue: 0.501960814, alpha: 1)
         return imageView
     }()
     
-    let locationLabel: UILabel = {
+    lazy var locationLabel: UILabel = {
         let label = UILabel()
-        label.text = "Seoul"
         label.font = UIFont.systemFont(ofSize: 18)
         label.textColor = #colorLiteral(red: 0, green: 0, blue: 0, alpha: 1)
         return label
@@ -79,12 +84,12 @@ class ViewController: UIViewController {
         imageView.frame.size.width = 15
         imageView.frame.size.height = 15
         imageView.image = UIImage(systemName: "person")
+        imageView.tintColor = #colorLiteral(red: 0.501960814, green: 0.501960814, blue: 0.501960814, alpha: 1)
         return imageView
     }()
     
-    let nFollowersLabel: UILabel = {
+    lazy var nFollowersLabel: UILabel = {
         let label = UILabel()
-        label.text = "20"
         label.font = UIFont.boldSystemFont(ofSize: 18)
         label.textColor = #colorLiteral(red: 0, green: 0, blue: 0, alpha: 1)
         return label
@@ -94,13 +99,12 @@ class ViewController: UIViewController {
         let label = UILabel()
         label.text = "followers∙"
         label.font = UIFont.systemFont(ofSize: 18)
-        label.textColor = #colorLiteral(red: 0, green: 0, blue: 0, alpha: 1)
+        label.textColor = #colorLiteral(red: 0.501960814, green: 0.501960814, blue: 0.501960814, alpha: 1)
         return label
     }()
     
-    let nFollowingLabel: UILabel = {
+    lazy var nFollowingLabel: UILabel = {
         let label = UILabel()
-        label.text = "30"
         label.font = UIFont.boldSystemFont(ofSize: 18)
         label.textColor = #colorLiteral(red: 0, green: 0, blue: 0, alpha: 1)
         return label
@@ -110,7 +114,7 @@ class ViewController: UIViewController {
         let label = UILabel()
         label.text = "following"
         label.font = UIFont.systemFont(ofSize: 18)
-        label.textColor = #colorLiteral(red: 0, green: 0, blue: 0, alpha: 1)
+        label.textColor = #colorLiteral(red: 0.501960814, green: 0.501960814, blue: 0.501960814, alpha: 1)
         return label
     }()
     
@@ -145,10 +149,31 @@ class ViewController: UIViewController {
     
     override func viewDidLoad() {
         super.viewDidLoad()
-        view.backgroundColor = .lightGray
+        
+        view.backgroundColor = #colorLiteral(red: 0.8983306289, green: 0.9440698028, blue: 0.9655331969, alpha: 1)
         setupLayout()
         setupTableView()
+        Task {
+               await updateData()
+            }
+    }
+    
+    func updateData() async {
+        await dataManager.callAPI()
+        profile = dataManager.getProfile()
+        repositories = dataManager.getRepository()
         
+        DispatchQueue.main.async {
+            self.setData()
+        }
+    }
+    
+    func setData() {
+        tableView.reloadData()
+        profileNameLabel.text = profile.name
+        locationLabel.text = profile.location
+        nFollowersLabel.text = "\(profile.followers)"
+        nFollowingLabel.text = "\(profile.following)"
     }
 
     func setupTableView() {
@@ -156,10 +181,13 @@ class ViewController: UIViewController {
         view.addSubview(tableView)
         
         tableView.dataSource = self
-        tableView.delegate = self
+//        tableView.delegate = self
         tableView.rowHeight = 70
         tableView.register(MyTableViewCell.self, forCellReuseIdentifier: "MyCell")
     
+        tableView.refreshControl = UIRefreshControl()
+        tableView.refreshControl?.addTarget(self, action: #selector(refreshFunc), for: .valueChanged)
+        
         tableView.translatesAutoresizingMaskIntoConstraints = false
         
         NSLayoutConstraint.activate([
@@ -168,6 +196,12 @@ class ViewController: UIViewController {
             tableView.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: 0),
             tableView.bottomAnchor.constraint(equalTo: view.bottomAnchor, constant: 0)
         ])
+    }
+    
+    @objc func refreshFunc() {
+        DispatchQueue.main.async {
+            self.tableView.refreshControl?.endRefreshing()
+        }
     }
     
     func setupLayout() {
@@ -203,24 +237,18 @@ class ViewController: UIViewController {
 extension ViewController: UITableViewDataSource {
     
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
-        return 3
+        return repositories.count
     }
     
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         let cell = tableView.dequeueReusableCell(withIdentifier: "MyCell", for: indexPath) as! MyTableViewCell
-//        cell.menuImageView.image = orderArray[indexPath.row].menuImage
-//        cell.menuLabel.text = orderArray[indexPath.row].menuName
-//        cell.optionLabel.text = orderArray[indexPath.row].menuOption
-//        cell.selectionStyle = .none
+        cell.repoNameLabel.text = repositories[indexPath.row].name
+        cell.repoLanguageLabel.text = repositories[indexPath.row].language ?? "None"
+        cell.selectionStyle = .none
         return cell
     }
 }
 
-extension ViewController: UITableViewDelegate {
-    
-    func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
-        
-    }
-}
+
 
 

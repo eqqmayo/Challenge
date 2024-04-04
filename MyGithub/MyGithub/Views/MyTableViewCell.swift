@@ -11,7 +11,6 @@ class MyTableViewCell: UITableViewCell {
     
     let repoNameLabel: UILabel = {
         let label = UILabel()
-        label.text = "Repository"
         label.font = UIFont.systemFont(ofSize: 18)
         label.textColor = #colorLiteral(red: 0, green: 0, blue: 0, alpha: 1)
         return label
@@ -19,7 +18,6 @@ class MyTableViewCell: UITableViewCell {
     
     let repoLanguageLabel: UILabel = {
         let label = UILabel()
-        label.text = "Swift"
         label.font = UIFont.systemFont(ofSize: 15)
         label.textColor = #colorLiteral(red: 0, green: 0, blue: 0, alpha: 1)
         return label
@@ -29,6 +27,7 @@ class MyTableViewCell: UITableViewCell {
         super.init(style: .default, reuseIdentifier: reuseIdentifier)
         setupLayout()
     }
+    
     required init?(coder: NSCoder) {
         fatalError("init(coder:) has not been implemented")
     }
