@@ -7,12 +7,13 @@
 
 import UIKit
 import Alamofire
+import Kingfisher
 
 class ViewController: UIViewController {
     
-    var profile = Profile(name: "길동이", location: "한양", followers: 123, following: 456)
+    var profile = Profile(name: "길동이", avatarURL: "https://avatars.githubusercontent.com/u/144116848?v=4", location: "한양", followers: 123, following: 456)
     var repositories: [Repository] = []
-    
+    var page = 1
     let dataManager = DataManager()
     
     lazy var profileView: UIView = {
@@ -24,9 +25,11 @@ class ViewController: UIViewController {
     
     let profileImageView: UIImageView = {
         let imageView = UIImageView()
-        imageView.layer.cornerRadius = imageView.frame.height / 2
+        imageView.translatesAutoresizingMaskIntoConstraints = false
+        imageView.heightAnchor.constraint(equalToConstant: 80).isActive = true
+        imageView.widthAnchor.constraint(equalToConstant: 80).isActive = true
+        imageView.layer.cornerRadius = 40
         imageView.clipsToBounds = true
-        imageView.image = UIImage(systemName: "square.fill")
         return imageView
     }()
     
@@ -174,6 +177,7 @@ class ViewController: UIViewController {
         locationLabel.text = profile.location
         nFollowersLabel.text = "\(profile.followers)"
         nFollowingLabel.text = "\(profile.following)"
+        profileImageView.kf.setImage(with: URL(string: profile.avatarURL))
     }
 
     func setupTableView() {
@@ -181,9 +185,10 @@ class ViewController: UIViewController {
         view.addSubview(tableView)
         
         tableView.dataSource = self
-//        tableView.delegate = self
+        tableView.delegate = self
         tableView.rowHeight = 70
         tableView.register(MyTableViewCell.self, forCellReuseIdentifier: "MyCell")
+//        tableView.register(FooterView.self, forHeaderFooterViewReuseIdentifier: "footer")
     
         tableView.refreshControl = UIRefreshControl()
         tableView.refreshControl?.addTarget(self, action: #selector(refreshFunc), for: .valueChanged)
@@ -194,7 +199,8 @@ class ViewController: UIViewController {
             tableView.topAnchor.constraint(equalTo: profileView.bottomAnchor, constant: 20),
             tableView.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 0),
             tableView.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: 0),
-            tableView.bottomAnchor.constraint(equalTo: view.bottomAnchor, constant: 0)
+            tableView.bottomAnchor.constraint(equalTo: view.bottomAnchor, constant: 0),
+            
         ])
     }
     
@@ -204,12 +210,16 @@ class ViewController: UIViewController {
         }
     }
     
+    func loadMore() {
+//        let curCount = dataSource.count
+//        dataSource.append(contentsOf: (1+curCount...10+curCount).map(String.init))
+        }
+    
     func setupLayout() {
         
         view.addSubview(profileView)
         
         profileView.translatesAutoresizingMaskIntoConstraints = false
-        profileImageView.translatesAutoresizingMaskIntoConstraints = false
         nameStackView.translatesAutoresizingMaskIntoConstraints = false
         detailStackView.translatesAutoresizingMaskIntoConstraints = false
         
@@ -217,16 +227,14 @@ class ViewController: UIViewController {
             profileView.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 0),
             profileView.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: 0),
             profileView.topAnchor.constraint(equalTo: view.topAnchor, constant: 0),
-            profileView.heightAnchor.constraint(equalToConstant: 300),
+            profileView.heightAnchor.constraint(equalToConstant: 270),
             
-            profileImageView.leadingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.leadingAnchor, constant: 20),
+            profileImageView.leadingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.leadingAnchor, constant: 30),
             profileImageView.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: 35),
-            profileImageView.heightAnchor.constraint(equalToConstant: 100),
-            profileImageView.widthAnchor.constraint(equalToConstant: 100),
             
             
-            nameStackView.leadingAnchor.constraint(equalTo: profileImageView.trailingAnchor, constant:15),
-            nameStackView.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: 55),
+            nameStackView.leadingAnchor.constraint(equalTo: profileImageView.trailingAnchor, constant:20),
+            nameStackView.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: 50),
             
             detailStackView.leadingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.leadingAnchor, constant: 30),
             detailStackView.topAnchor.constraint(equalTo: profileImageView.bottomAnchor, constant:15)
@@ -234,7 +242,7 @@ class ViewController: UIViewController {
     }
 }
 
-extension ViewController: UITableViewDataSource {
+extension ViewController: UITableViewDataSource, UITableViewDelegate {
     
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
         return repositories.count
@@ -247,7 +255,49 @@ extension ViewController: UITableViewDataSource {
         cell.selectionStyle = .none
         return cell
     }
+    
+    func tableView(_ tableView: UITableView, willDisplay cell: UITableViewCell, forRowAt indexPath: IndexPath) {
+//        let isLast = indexPath.row == dataSource.count - 1
+//        guard isLast else { return }
+        
+//        let footerView = tableView.dequeueReusableHeaderFooterView(withIdentifier: "footer") as? FooterView
+//        tableView.tableFooterView = footerView
+//        
+//        loadMore()
+//        tableView.reloadData()
+//        
+//        DispatchQueue.main.asyncAfter(deadline: .now() + 1) {
+//            tableView.tableFooterView = nil
+//        }
+    }
+    
+    func tableView(_ tableView: UITableView, heightForFooterInSection section: Int) -> CGFloat {
+        130
+    }
 }
+
+//class FooterView: UITableViewHeaderFooterView {
+//    override init(reuseIdentifier: String?) {
+//        super.init(reuseIdentifier: reuseIdentifier)
+//        
+//        let indicatorView = UIActivityIndicatorView()
+//        indicatorView.translatesAutoresizingMaskIntoConstraints = false
+//        addSubview(indicatorView)
+//        
+//        NSLayoutConstraint.activate([
+//            indicatorView.leadingAnchor.constraint(equalTo: leadingAnchor),
+//            indicatorView.trailingAnchor.constraint(equalTo: trailingAnchor),
+//            indicatorView.bottomAnchor.constraint(equalTo: bottomAnchor),
+//            indicatorView.topAnchor.constraint(equalTo: topAnchor),
+//        ])
+//        
+//        indicatorView.startAnimating()
+//    }
+//    
+//    required init?(coder: NSCoder) {
+//        fatalError()
+//    }
+//}
 
 
 

@@ -10,14 +10,14 @@ import Alamofire
 
 class DataManager {
     
-    var profile: Profile = Profile(name: "길동이", location: "한양", followers: 123, following: 456)
+    var profile: Profile = Profile(name: "길동이", avatarURL: "https://avatars.githubusercontent.com/u/144116848?v=4", location: "한양", followers: 123, following: 456)
     var repositoryArr: [Repository] = []
 
     func callAPI() async {
         let urlProfile = API.baseURL + "users/eqqmayo"
         let urlRepo = API.baseURL + "users/eqqmayo/repos"
         let urlAppleRepo = API.baseURL + "users/apple/repos"
-        let parameter = ["sort": "pushed"]
+        let parameter = ["sort": "pushed", "page": "1"]
         
         do {
             self.profile = try await fetchProfile(url: urlProfile)
@@ -76,9 +76,14 @@ class DataManager {
 
 struct Profile: Codable {
     let name: String
-//    let avatarURL: String
+    let avatarURL: String
     let location: String
     let followers, following: Int
+    
+    enum CodingKeys: String, CodingKey {
+            case name, location, followers, following
+            case avatarURL = "avatar_url"
+        }
 }
 
 struct Repository: Codable {
