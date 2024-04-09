@@ -16,6 +16,22 @@ class MyTableViewCell: UITableViewCell {
         return label
     }()
     
+    let repoDescriptionLabel: UILabel = {
+        let label = UILabel()
+        label.font = UIFont.systemFont(ofSize: 13)
+        label.textColor = #colorLiteral(red: 0.501960814, green: 0.501960814, blue: 0.501960814, alpha: 1)
+        return label
+    }()
+    
+    lazy var stackView: UIStackView = {
+        let stview = UIStackView(arrangedSubviews: [repoNameLabel, repoDescriptionLabel])
+        stview.axis = .vertical
+        stview.spacing = 3
+        stview.alignment = .leading
+        stview.distribution = .fillProportionally
+        return stview
+    }()
+    
     let repoLanguageLabel: UILabel = {
         let label = UILabel()
         label.font = UIFont.systemFont(ofSize: 15)
@@ -34,15 +50,16 @@ class MyTableViewCell: UITableViewCell {
 
     func setupLayout() {
         
-        self.contentView.addSubview(repoNameLabel)
+        self.contentView.addSubview(stackView)
         self.contentView.addSubview(repoLanguageLabel)
         
-        repoNameLabel.translatesAutoresizingMaskIntoConstraints = false
+        stackView.translatesAutoresizingMaskIntoConstraints = false
         repoLanguageLabel.translatesAutoresizingMaskIntoConstraints = false
         
         NSLayoutConstraint.activate([
-            repoNameLabel.leadingAnchor.constraint(equalTo: self.contentView.leadingAnchor, constant: 20),
-            repoNameLabel.centerYAnchor.constraint(equalTo: self.contentView.centerYAnchor),
+            stackView.leadingAnchor.constraint(equalTo: self.contentView.leadingAnchor, constant: 20),
+            stackView.trailingAnchor.constraint(equalTo: self.repoLanguageLabel.leadingAnchor, constant: -20),
+            stackView.centerYAnchor.constraint(equalTo: self.contentView.centerYAnchor),
             
             repoLanguageLabel.trailingAnchor.constraint(equalTo: self.contentView.trailingAnchor, constant: -20),
             repoLanguageLabel.centerYAnchor.constraint(equalTo: self.contentView.centerYAnchor)

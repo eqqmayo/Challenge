@@ -12,17 +12,18 @@ class DataManager {
     
     var profile: Profile = Profile(name: "길동이", avatarURL: "https://avatars.githubusercontent.com/u/144116848?v=4", location: "한양", followers: 123, following: 456)
     var repositoryArr: [Repository] = []
-
+    
+    let urlProfile = API.baseURL + "users/eqqmayo"
+    let urlRepo = API.baseURL + "users/eqqmayo/repos"
+    let urlExtraRepo = API.baseURL + "users/apple/repos"
+    
+    lazy var parameter = ["page": "0"]
+    
     func callAPI() async {
-        let urlProfile = API.baseURL + "users/eqqmayo"
-        let urlRepo = API.baseURL + "users/eqqmayo/repos"
-        let urlAppleRepo = API.baseURL + "users/apple/repos"
-        let parameter = ["sort": "pushed", "page": "1"]
-        
         do {
             self.profile = try await fetchProfile(url: urlProfile)
             self.repositoryArr = try await fetchRepositories(url: urlRepo, parameters: parameter)
-            self.repositoryArr = try await fetchRepositories(url: urlAppleRepo, parameters: parameter)
+            try await self.repositoryArr.append(contentsOf: fetchRepositories(url: urlExtraRepo, parameters: parameter))
         } catch {
             print("Error: \(error)")
         }
@@ -33,7 +34,7 @@ class DataManager {
             AF.request(url,
                        method: .get,
                        encoding: URLEncoding.default,
-                       headers: ["Content-Type": "application/json", "Accept": "application/json"])
+                       headers: ["Authorization": API.token, "Content-Type": "application/json", "Accept": "application/json"])
             .validate(statusCode: 200..<300)
             .responseDecodable(of: Profile.self) { response in
                 switch response.result {
@@ -52,7 +53,7 @@ class DataManager {
                        method: .get,
                        parameters: parameters,
                        encoding: URLEncoding.default,
-                       headers: ["Content-Type": "application/json", "Accept": "application/json"])
+                       headers: ["Authorization": API.token, "Content-Type": "application/json", "Accept": "application/json"])
             .validate(statusCode: 200..<300)
             .responseDecodable(of: [Repository].self) { response in
                 switch response.result {
@@ -81,9 +82,9 @@ struct Profile: Codable {
     let followers, following: Int
     
     enum CodingKeys: String, CodingKey {
-            case name, location, followers, following
-            case avatarURL = "avatar_url"
-        }
+        case name, location, followers, following
+        case avatarURL = "avatar_url"
+    }
 }
 
 struct Repository: Codable {

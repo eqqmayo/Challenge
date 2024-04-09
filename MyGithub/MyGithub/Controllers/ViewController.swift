@@ -13,8 +13,10 @@ class ViewController: UIViewController {
     
     var profile = Profile(name: "길동이", avatarURL: "https://avatars.githubusercontent.com/u/144116848?v=4", location: "한양", followers: 123, following: 456)
     var repositories: [Repository] = []
-    var page = 1
     let dataManager = DataManager()
+    
+    var page = 1
+    var loadMore = true
     
     lazy var profileView: UIView = {
         let view = UIView()
@@ -157,7 +159,7 @@ class ViewController: UIViewController {
         setupLayout()
         setupTableView()
         Task {
-               await updateData()
+            await updateData()
             }
     }
     
@@ -165,10 +167,7 @@ class ViewController: UIViewController {
         await dataManager.callAPI()
         profile = dataManager.getProfile()
         repositories = dataManager.getRepository()
-        
-        DispatchQueue.main.async {
-            self.setData()
-        }
+        self.setData()
     }
     
     func setData() {
@@ -188,7 +187,7 @@ class ViewController: UIViewController {
         tableView.delegate = self
         tableView.rowHeight = 70
         tableView.register(MyTableViewCell.self, forCellReuseIdentifier: "MyCell")
-//        tableView.register(FooterView.self, forHeaderFooterViewReuseIdentifier: "footer")
+
     
         tableView.refreshControl = UIRefreshControl()
         tableView.refreshControl?.addTarget(self, action: #selector(refreshFunc), for: .valueChanged)
@@ -209,11 +208,6 @@ class ViewController: UIViewController {
             self.tableView.refreshControl?.endRefreshing()
         }
     }
-    
-    func loadMore() {
-//        let curCount = dataSource.count
-//        dataSource.append(contentsOf: (1+curCount...10+curCount).map(String.init))
-        }
     
     func setupLayout() {
         
@@ -242,7 +236,7 @@ class ViewController: UIViewController {
     }
 }
 
-extension ViewController: UITableViewDataSource, UITableViewDelegate {
+extension ViewController: UITableViewDataSource, UITableViewDelegate, UIScrollViewDelegate {
     
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
         return repositories.count
@@ -251,53 +245,39 @@ extension ViewController: UITableViewDataSource, UITableViewDelegate {
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         let cell = tableView.dequeueReusableCell(withIdentifier: "MyCell", for: indexPath) as! MyTableViewCell
         cell.repoNameLabel.text = repositories[indexPath.row].name
+        cell.repoDescriptionLabel.text = repositories[indexPath.row].description
         cell.repoLanguageLabel.text = repositories[indexPath.row].language ?? "None"
         cell.selectionStyle = .none
         return cell
     }
     
-    func tableView(_ tableView: UITableView, willDisplay cell: UITableViewCell, forRowAt indexPath: IndexPath) {
-//        let isLast = indexPath.row == dataSource.count - 1
-//        guard isLast else { return }
-        
-//        let footerView = tableView.dequeueReusableHeaderFooterView(withIdentifier: "footer") as? FooterView
-//        tableView.tableFooterView = footerView
-//        
-//        loadMore()
-//        tableView.reloadData()
-//        
-//        DispatchQueue.main.asyncAfter(deadline: .now() + 1) {
-//            tableView.tableFooterView = nil
-//        }
-    }
-    
     func tableView(_ tableView: UITableView, heightForFooterInSection section: Int) -> CGFloat {
         130
     }
+    
+    func scrollViewDidScroll(_ scrollView: UIScrollView) {
+        if tableView.contentOffset.y > (tableView.contentSize.height - tableView.bounds.size.height) {
+            if loadMore { beginLoadMore() }
+        }
+    }
+        
+    func beginLoadMore() {
+        Task {
+            await Task.sleep(700_000_000)
+            self.page += 1
+            self.dataManager.parameter["page"] = String(self.page)
+            do {
+                let newRepositories = try await self.dataManager.fetchRepositories(url: self.dataManager.urlExtraRepo, parameters: self.dataManager.parameter)
+                DispatchQueue.main.async {
+                    self.repositories.append(contentsOf: newRepositories)
+                    self.tableView.reloadData()
+                }
+            } catch {
+                print("Error: \(error)")
+            }
+        }
+    }
 }
-
-//class FooterView: UITableViewHeaderFooterView {
-//    override init(reuseIdentifier: String?) {
-//        super.init(reuseIdentifier: reuseIdentifier)
-//        
-//        let indicatorView = UIActivityIndicatorView()
-//        indicatorView.translatesAutoresizingMaskIntoConstraints = false
-//        addSubview(indicatorView)
-//        
-//        NSLayoutConstraint.activate([
-//            indicatorView.leadingAnchor.constraint(equalTo: leadingAnchor),
-//            indicatorView.trailingAnchor.constraint(equalTo: trailingAnchor),
-//            indicatorView.bottomAnchor.constraint(equalTo: bottomAnchor),
-//            indicatorView.topAnchor.constraint(equalTo: topAnchor),
-//        ])
-//        
-//        indicatorView.startAnimating()
-//    }
-//    
-//    required init?(coder: NSCoder) {
-//        fatalError()
-//    }
-//}
 
 
 
